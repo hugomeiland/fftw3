@@ -3,7 +3,7 @@ SIMD_HEADER=simd-support/simd-r5v2048.h
 include $(top_srcdir)/dft/simd/codlist.mk
 include $(top_srcdir)/dft/simd/simd.mk
 
-if HAVE_R5V
+if HAVE_R5V_LARGE
 
 BUILT_SOURCES = $(EXTRA_DIST)
 noinst_LTLIBRARIES = libdft_r5v2048_codelets.la

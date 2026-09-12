@@ -253,11 +253,17 @@ if test "$have_sve" = "yes"; then
 fi
 AM_CONDITIONAL(HAVE_SVE, test "$have_sve" = "yes")
 
-AC_ARG_ENABLE(r5v, [AC_HELP_STRING([--enable-r5v],[enable RISC-V V optimizations])], have_r5v=$enableval, have_r5v=no)
+AC_ARG_ENABLE(r5v, [AC_HELP_STRING([--enable-r5v],[enable RISC-V V optimizations (VLEN packs <= 1024 bits)])], have_r5v=$enableval, have_r5v=no)
+AC_ARG_ENABLE(large-r5v, [AC_HELP_STRING([--enable-large-r5v],[enable RISC-V V codelets for VLEN > 1024 bits (implies --enable-r5v; EPI-class)])], have_large_r5v=$enableval, have_large_r5v=no)
+if test "$have_large_r5v" = "yes"; then
+        have_r5v=yes
+        AC_DEFINE(HAVE_R5V_LARGE,1,[Define to enable RISC-V V codelets for VLEN > 1024 bits.])
+fi
 if test "$have_r5v" = "yes"; then
         AC_DEFINE(HAVE_R5V,1,[Define to enable RISC-V V optimizations.])
 fi
 AM_CONDITIONAL(HAVE_R5V, test "$have_r5v" = "yes")
+AM_CONDITIONAL(HAVE_R5V_LARGE, test "$have_large_r5v" = "yes")
 
 dnl FIXME:
 dnl AC_ARG_ENABLE(mips-ps, [AS_HELP_STRING([--enable-mips-ps],[enable MIPS pair-single optimizations])], have_mips_ps=$enableval, have_mips_ps=no)

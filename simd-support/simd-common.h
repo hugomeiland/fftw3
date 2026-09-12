@@ -111,7 +111,7 @@
 #define SIMD_STRIDE_OKA(x) (!(((x) * sizeof(R)) % ALIGNMENTA))
 #define SIMD_VSTRIDE_OK SIMD_STRIDE_OK
 
-/* macrology to call DEFX N times */
+/* macrology to call DEFX N times (extended for large R5V / SVE packs) */
 #define REPEAT_1(DEFX, v, x) DEFX(v, x)
 #define REPEAT_2(DEFX, v, x) REPEAT_1(DEFX, v, x), REPEAT_1(DEFX, (v)+1, x)
 #define REPEAT_4(DEFX, v, x) REPEAT_2(DEFX, v, x), REPEAT_2(DEFX, (v)+2, x)
@@ -119,4 +119,8 @@
 #define REPEAT_16(DEFX, v, x) REPEAT_8(DEFX, v, x), REPEAT_8(DEFX,(v)+8, x)
 #define REPEAT_32(DEFX, v, x) REPEAT_16(DEFX, v, x), REPEAT_16(DEFX, (v)+16, x)
 #define REPEAT_64(DEFX, v, x) REPEAT_32(DEFX, v, x), REPEAT_32(DEFX, (v)+32, x)
+#define REPEAT_128(DEFX, v, x) REPEAT_64(DEFX, v, x), REPEAT_64(DEFX, (v)+64, x)
+#define REPEAT_256(DEFX, v, x) REPEAT_128(DEFX, v, x), REPEAT_128(DEFX, (v)+128, x)
+#define REPEAT_512(DEFX, v, x) REPEAT_256(DEFX, v, x), REPEAT_256(DEFX, (v)+256, x)
+#define REPEAT_1024(DEFX, v, x) REPEAT_512(DEFX, v, x), REPEAT_512(DEFX, (v)+512, x)
 

@@ -414,13 +414,10 @@ static inline void STN4(R *x, V v0, V v1, V v2, V v3, INT ovs) {
 #endif
 #endif /* FFTW_SINGLE */
 
-/* twiddle storage #1: compact, slower */
-#define REQ_VTW1
-#define VTW_SIZE VL
-#include "vtw.h"
+/* twiddle storage #1: compact, slower (same macros as simd-maskedsve.h) */
+#define DEFVTW1(v, x) {TW_CEXP, v, x}
+#define VTW1(v,x) CONCAT2(REPEAT_, VL)(DEFVTW1, v, x)
 #define TWVL1 (VL)
-#undef VTW_SIZE
-#undef REQ_VTW1
 
 static inline V BYTW1(const R *t, V sr)
 {
@@ -433,12 +430,11 @@ static inline V BYTWJ1(const R *t, V sr)
 }
 
 /* twiddle storage #2: twice the space, faster (when in cache) */
-#define REQ_VTW2
-#define VTW_SIZE (2*VL)
-#include "vtw.h"
+#define DEFVTW2_COS(v, x) {TW_COS, v, x}, {TW_COS, v, x}
+#define DEFVTW2_SIN(v, x) {TW_SIN, v, -x}, {TW_SIN, v, x}
+#define VTW2(v,x) CONCAT2(REPEAT_, VL)(DEFVTW2_COS, v, x),      \
+          CONCAT2(REPEAT_, VL)(DEFVTW2_SIN, v, x)
 #define TWVL2 (2*VL)
-#undef VTW_SIZE
-#undef REQ_VTW2
 
 static inline V BYTW2(const R *t, V sr)
 {
@@ -461,12 +457,11 @@ static inline V BYTWJ2(const R *t, V sr)
 #define TWVL3 TWVL1
 
 /* twiddle storage for split arrays */
-#define REQ_VTWS
-#define VTW_SIZE (2*VL)
-#include "vtw.h"
+#define DEFVTWS_COS(v, x) {TW_COS, 2*(v), x}, {TW_COS, 2*(v)+1, x}
+#define DEFVTWS_SIN(v, x) {TW_SIN, 2*(v), x}, {TW_SIN, 2*(v)+1, x}
+#define VTWS(v,x) CONCAT2(REPEAT_, VL)(DEFVTWS_COS, v, x),      \
+          CONCAT2(REPEAT_, VL)(DEFVTWS_SIN, v, x)
 #define TWVLS (2*VL)
-#undef VTW_SIZE
-#undef REQ_VTWS
 
 #define VLEAVE() /* nothing */
 

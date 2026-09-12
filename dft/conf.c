@@ -114,6 +114,7 @@ void X(dft_conf_standard)(planner *p)
           X(solvtab_exec)(X(solvtab_dft_r5v512), p);
      if (X(have_simd_r5v)(1024))
           X(solvtab_exec)(X(solvtab_dft_r5v1024), p);
+#if HAVE_R5V_LARGE
      if (X(have_simd_r5v)(2048))
           X(solvtab_exec)(X(solvtab_dft_r5v2048), p);
      if (X(have_simd_r5v)(4096))
@@ -122,5 +123,6 @@ void X(dft_conf_standard)(planner *p)
 	  X(solvtab_exec)(X(solvtab_dft_r5v8192), p);
      if (X(have_simd_r5v)(16384))
 	  X(solvtab_exec)(X(solvtab_dft_r5v16384), p);
+#endif
 #endif
 }

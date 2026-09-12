@@ -119,8 +119,10 @@ extern const solvtab X(solvtab_dft_r5v128);
 extern const solvtab X(solvtab_dft_r5v256);
 extern const solvtab X(solvtab_dft_r5v512);
 extern const solvtab X(solvtab_dft_r5v1024);
+#if HAVE_R5V_LARGE
 extern const solvtab X(solvtab_dft_r5v2048);
 extern const solvtab X(solvtab_dft_r5v4096);
 extern const solvtab X(solvtab_dft_r5v8192);
 extern const solvtab X(solvtab_dft_r5v16384);
+#endif
 #endif				/* __DFT_CODELET_H__ */

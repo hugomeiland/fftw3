@@ -101,4 +101,8 @@ const char X(version)[] = PACKAGE "-" PACKAGE_VERSION
    "-r5v"
 #endif
 
+#if defined(HAVE_R5V_LARGE)
+   "-large-r5v"
+#endif
+
 ;
