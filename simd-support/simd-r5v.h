@@ -113,27 +113,39 @@ static inline V VLIT(const R re, const R im) {
 // generate (all 1, 0, all 1, 0, ...) to split real and imagine parts
 #define VPARTSPLIT TYPEINT(vsub_vx)(TYPEINT(vand_vx)(TYPEINT(vid_v)(2*VL), 1, 2*VL), 1, 2*VL)
 
+/* Even lanes of an interleaved real/imag vector. True selects vs1 in vmerge. */
+static inline Vmask VEVEN(void)
+{
+	Vint idx = TYPEINT(vid_v)(2*VL);
+	Vint lsb = TYPEINT(vand_vx)(idx, 1, 2*VL);
+	return DS(__riscv_vmseq_vx_u64m1_b64, __riscv_vmseq_vx_u32m1_b32)(lsb, 0, 2*VL);
+}
+
+/* Slide by one. The undisturbed edge lane is x; the callers discard it. */
+static inline V VSLIDEUP1(const V x)
+{
+	return DS(__riscv_vslideup_vx_f64m1_tu, __riscv_vslideup_vx_f32m1_tu)(x, x, 1, 2*VL);
+}
+static inline V VSLIDEDOWN1(const V x)
+{
+	return DS(__riscv_vslidedown_vx_f64m1_tu, __riscv_vslidedown_vx_f32m1_tu)(x, x, 1, 2*VL);
+}
+
 static inline V VDUPL(const V x) {
-	Vint idx = TYPEINT(vid_v)(2*VL); // (0, 1, 2, 3, ...)
-	//Vint vnotone = TYPEINT(vmv_v_x)(DS(~1ull,~1), 2*VL);
-	Vint hidx = TYPEINT(vand_vx)(idx, DS(~1ull,~1), 2*VL); // (0, 0, 2, 2, ...)
-	return TYPE(vrgather_vv)(x, hidx, 2*VL);
+	/* (r0, i0, r1, i1, ...) -> (r0, r0, r1, r1, ...) */
+	return TYPE(vmerge_vvm)(VSLIDEUP1(x), x, VEVEN(), 2*VL);
 }
 static inline V VDUPH(const V x) {
-	Vint idx = TYPEINT(vid_v)(2*VL); // (0, 1, 2, 3, ...)
-	//Vint vone = TYPEINT(vmv_v_x)(1, 2*VL);
-	Vint hidx = TYPEINT(vor_vx)(idx, 1, 2*VL); // (1, 1, 3, 3, ...)
-	return TYPE(vrgather_vv)(x, hidx, 2*VL);
+	/* (r0, i0, r1, i1, ...) -> (i0, i0, i1, i1, ...) */
+	return TYPE(vmerge_vvm)(x, VSLIDEDOWN1(x), VEVEN(), 2*VL);
 }
 
 static inline V FLIP_RI(const V x) {
-	Vint idx = TYPEINT(vid_v)(2*VL); // (0, 1, 2, 3, ...)
-	//Vint vone = TYPEINT(vmv_v_x)(1, 2*VL);
-	Vint hidx = TYPEINT(vxor_vx)(idx, 1, 2*VL); // (1, 0, 3, 2, ...)
-	return TYPE(vrgather_vv)(x, hidx, 2*VL);
+	/* (r0, i0, r1, i1, ...) -> (i0, r0, i1, r1, ...) */
+	return TYPE(vmerge_vvm)(VSLIDEUP1(x), VSLIDEDOWN1(x), VEVEN(), 2*VL);
 }
 
-#define VNEG(a)   TYPE(vfsgnjn_vv)(a,a,2*VL)
+#define VNEG(a)   TYPE(vfneg_v)(a,2*VL)
 #define VADD(a,b) TYPE(vfadd_vv)(a,b,2*VL)
 #define VSUB(a,b) TYPE(vfsub_vv)(a,b,2*VL)
 #define VMUL(a,b) TYPE(vfmul_vv)(a,b,2*VL)
@@ -146,15 +158,8 @@ static inline V FLIP_RI(const V x) {
 #define VFMSCONJ(b,c)  VFMACONJ(b,VNEG(c)) // fixme: improve
 #define VFNMSCONJ(b,c) VNEG(VFMSCONJ(b,c)) // fixme: improve
 
-#if 1
-static inline V VCONJ(const V x) {
-	Vint idx = TYPEINT(vid_v)(2*VL); // (0, 1, 2, 3, ...)
-	//Vint vone = TYPEINT(vmv_v_x)(1, 2*VL);
-	Vint hidx = TYPEINT(vand_vx)(idx, 1, 2*VL); // (0, 1, 0, 1, 0, 1)
-	//return TYPEMASK(vfsgnjn_vv)(x, x, x, INT2MASK(hidx), 2*VL);
-	return TYPEMERGEDMASK(vfsgnjn_vv)(INT2MASK(hidx), x, x, x, 2*VL);
-}
-#else
+/* Unmasked. A masked vfsgnjn keeps a mask register live and uses the
+   mask-undisturbed policy. Zero the other half, negate, and add. */
 static inline V VCONJ(const V x)
 {
 	Vint partr = VPARTSPLIT; // (all 1, 0, all 1, 0, ...)
@@ -163,7 +168,6 @@ static inline V VCONJ(const V x)
 	V xh = TYPEINTERPRETU2F(vreinterpret_v)(TYPEINT(vand_vv)(TYPEINTERPRETF2U(vreinterpret_v)(x), parti, 2*VL)); // set even elements to 0
 	return VADD(xl, VNEG(xh));
 }
-#endif
 
 /* can probably be done better */
 static inline V VBYI(V x)
