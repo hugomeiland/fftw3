@@ -121,14 +121,16 @@ static inline Vmask VEVEN(void)
 	return DS(__riscv_vmseq_vx_u64m1_b64, __riscv_vmseq_vx_u32m1_b32)(lsb, 0, 2*VL);
 }
 
-/* Slide by one. The undisturbed edge lane is x; the callers discard it. */
+/* Slide by one and insert 0 in the edge lane. Callers discard that lane.
+   vfslide1 is the one-element form; vslideup.vx by a variable offset is the
+   general instruction underneath it. */
 static inline V VSLIDEUP1(const V x)
 {
-	return DS(__riscv_vslideup_vx_f64m1_tu, __riscv_vslideup_vx_f32m1_tu)(x, x, 1, 2*VL);
+	return DS(__riscv_vfslide1up_vf_f64m1, __riscv_vfslide1up_vf_f32m1)(x, DS(0.0, 0.0f), 2*VL);
 }
 static inline V VSLIDEDOWN1(const V x)
 {
-	return DS(__riscv_vslidedown_vx_f64m1_tu, __riscv_vslidedown_vx_f32m1_tu)(x, x, 1, 2*VL);
+	return DS(__riscv_vfslide1down_vf_f64m1, __riscv_vfslide1down_vf_f32m1)(x, DS(0.0, 0.0f), 2*VL);
 }
 
 static inline V VDUPL(const V x) {
